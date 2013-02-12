@@ -1,0 +1,1 @@
+Parallel MPI code that performs Jacobi iterations on a matrix divided into rectangles.

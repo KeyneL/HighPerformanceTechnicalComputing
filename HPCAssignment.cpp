@@ -3,8 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-const static int N = 1000;
-const static int MAXITER = 100000;
+const static int N = 50;
+const static int MAXITER = 100;
 
 int main(int argc, char *argv[]) {
 	 int numprocs, rank;
@@ -137,35 +137,33 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	int *sizeofdatatoreduce = new int[numprocs];
-	for(int i = 1; i < numprocs; ++i)
-		sizeofdatatoreduce[i] = (endx[i] - startx[i]) * (endy[i] - starty[i]);
-
 	if(rank != 0){
-		double *datatoreduce = new double[sizeofdatatoreduce[rank]];
-		int index = 0;
-		for(int y = starty[rank]; y < endy[rank]; ++y)
-			for(int x = startx[rank]; x < endx[rank]; ++x){
-				datatoreduce[index] = rmatrix[y][x];
-				++index;
-			}
+		for(int y = starty[rank]; y < endy[rank]; ++y){
+			double *datatoreduce = new double[endx[rank] - startx[rank]];
+			int index = 0;
+				for(int x = startx[rank]; x < endx[rank]; ++x){
+					datatoreduce[index] = rmatrix[y][x];
+					++index;
+				}
 
-		MPI_Send(datatoreduce, sizeofdatatoreduce[rank], MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
-		delete[] datatoreduce;
+			MPI_Send(datatoreduce, endx[rank] - startx[rank] , MPI_DOUBLE, 0, tag, MPI_COMM_WORLD);
+			delete[] datatoreduce;
+		}
 	}					
 	
 	else{
 		double *datareceived;
 		for(int i = 1; i < numprocs; ++i){
-			datareceived = new double[sizeofdatatoreduce[i]];
-			MPI_Recv(datareceived, sizeofdatatoreduce[i], MPI_DOUBLE, i, tag, MPI_COMM_WORLD, &stat);
-			int index = 0;
-			for(int y = starty[rank]; y < endy[rank]; ++y)
+			for(int j = starty[i]; j < endy[i]; ++j){
+				datareceived = new double[endx[i] - startx[i]];
+				MPI_Recv(datareceived, endx[i] - startx[i] , MPI_DOUBLE, i, tag, MPI_COMM_WORLD, &stat);
+				int index = 0;
 				for(int x = startx[rank]; x < endx[rank]; ++x){
-					rmatrix[y][x] = datareceived[index];
+					rmatrix[j][x] = datareceived[index];
 					++index;
 				}
-			delete[] datareceived;
+				delete[] datareceived;
+			}
 		}
 
 		std::ofstream file;
@@ -180,7 +178,6 @@ int main(int argc, char *argv[]) {
 		std::cout << std::fixed << "Time to perform the calculation = " << starttime - endtime << " seconds" << std::endl;
 	}
 
-	delete[] sizeofdatatoreduce;	
     MPI_Finalize();
 	return 0;
 }

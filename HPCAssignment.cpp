@@ -152,6 +152,8 @@ int main(int argc, char *argv[]) {
 	}					
 	
 	else{
+		double endtime = MPI_Wtime();
+		std::cout << std::fixed << "Time to perform the calculation = " << starttime - endtime << " seconds" << std::endl;
 		double *datareceived;
 		for(int i = 1; i < numprocs; ++i){
 			for(int j = starty[i]; j < endy[i]; ++j){
@@ -174,8 +176,6 @@ int main(int argc, char *argv[]) {
 			file << "\n";
 		}
 		file.close();
-		double endtime = MPI_Wtime();
-		std::cout << std::fixed << "Time to perform the calculation = " << starttime - endtime << " seconds" << std::endl;
 	}
 
     MPI_Finalize();
